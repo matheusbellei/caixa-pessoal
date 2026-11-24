@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caixa Pessoal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   1. ESTILOS — paleta café (mesma do Controle de Finanças)
+   ===================================================================== */
+:root{
+  --espresso:#3B2416; --mocha:#6F4E37; --caramelo:#C68B59; --latte:#E8D3B9;
+  --creme:#F5EBDD; --espuma:#FBF6EF; --oliva:#5B7A3A; --terracota:#B5543A;
+  --texto:#3B2416; --texto-2:#7A6352; --borda:#E8D3B9;
+  --raio:16px; --raio-p:10px;
+  --sombra:0 1px 2px rgba(59,36,22,.06),0 2px 8px rgba(59,36,22,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:"DM Sans",system-ui,-apple-system,sans-serif;background:var(--creme);color:var(--texto);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,textarea,select{font:inherit;color:inherit}
+a{color:var(--mocha)}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.sm{width:16px;height:16px}
+.hidden{display:none!important}
+
+/* Topo */
+.topo{position:sticky;top:0;z-index:20;background:var(--creme);display:flex;align-items:center;gap:6px;padding:10px 14px}
+.topo h1{font-size:19px;font-weight:700;margin:0 auto 0 4px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
+.topo h1 small{font-size:12px;font-weight:500;color:var(--texto-2)}
+.ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;position:relative;color:var(--espresso)}
+.ib:hover{background:var(--latte)}
+.busca{flex:1;display:flex;align-items:center;gap:8px;background:var(--espuma);border:1px solid var(--borda);border-radius:12px;padding:0 10px;height:40px}
+.busca input{flex:1;border:0;background:none;outline:none;min-width:0}
+
+/* Menu lateral */
+.veu{position:fixed;inset:0;background:rgba(59,36,22,.35);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.veu.on{opacity:1;pointer-events:auto}
+.menu{position:fixed;top:0;bottom:0;left:0;width:280px;max-width:85vw;background:var(--espuma);z-index:41;transform:translateX(-100%);transition:transform .22s ease;padding:18px 12px;display:flex;flex-direction:column;gap:2px}
+.menu.on{transform:none}
+.menu .marca{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;padding:6px 10px 16px}
+.menu a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;text-decoration:none;color:var(--espresso);font-weight:500}
+.menu a:hover{background:var(--creme)}
+.menu a.on{background:var(--latte)}
+.menu .rodape{margin-top:auto;font-size:12px;color:var(--texto-2);padding:10px 12px}
+
+main{padding:0 14px 40px;max-width:100%}
+.pagina{max-width:760px;margin:0 auto}
+.pagina h2{font-size:22px;margin:8px 0 4px}
+.pagina p.sub{color:var(--texto-2);margin:0 0 16px}
+
+/* Captura rápida */
+.captura{background:var(--espuma);border:1px solid var(--borda);border-radius:var(--raio);padding:12px;box-shadow:var(--sombra);max-width:880px;margin:4px auto 14px;transition:border-color .15s,box-shadow .15s}
+.captura.foco{border-color:var(--caramelo);box-shadow:0 0 0 3px rgba(198,139,89,.18)}
+.captura.arrastando{border-style:dashed;border-color:var(--mocha);background:#fff}
+.captura textarea{width:100%;border:0;outline:none;background:none;resize:none;font-size:16px;min-height:26px;max-height:200px;padding:2px 4px}
+.captura textarea::placeholder{color:#a58e7b}
+.pendentes{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
+.pend{position:relative;display:flex;align-items:center;gap:8px;background:var(--creme);border-radius:10px;padding:6px 30px 6px 6px;max-width:220px;font-size:13px}
+.pend img{width:40px;height:40px;object-fit:cover;border-radius:7px}
+.pend .ext{width:40px;height:40px;border-radius:7px;background:var(--latte);display:grid;place-items:center;font-size:11px;font-weight:700;text-transform:uppercase}
+.pend span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pend button{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.pend button:hover{background:var(--latte)}
+.barra{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.barra .destino{font-size:12.5px;color:var(--texto-2);margin-left:4px;align-self:center;white-space:nowrap}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+.chips::-webkit-scrollbar{display:none}
+.chip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:6px 11px;border-radius:999px;background:var(--creme);font-size:13px;font-weight:500;border:1px solid transparent}
+.chip:hover{border-color:var(--latte)}
+.chip.on{background:var(--espresso);color:var(--espuma)}
+.chip .bola{width:8px;height:8px;border-radius:50%}
+.bt{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 16px;border-radius:12px;font-weight:600;white-space:nowrap}
+.bt.pri{background:var(--espresso);color:var(--espuma)}
+.bt.pri:hover{background:var(--mocha)}
+.bt.pri:disabled{opacity:.45;cursor:default}
+.bt.sec{background:var(--latte);color:var(--espresso)}
+.bt.sec:hover{background:#dfc6a7}
+.bt.leve{background:transparent;color:var(--espresso)}
+.bt.leve:hover{background:var(--creme)}
+.bt.perigo{background:transparent;color:var(--terracota)}
+.bt.perigo:hover{background:#f6e1d9}
+.bt.pq{height:34px;padding:0 12px;font-size:13.5px}
+.dica{font-size:12px;color:var(--texto-2);text-align:center;margin:-6px 0 12px}
+
+/* Filtros de tag */
+.filtros{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:880px;margin:0 auto 12px;padding:0 2px}
+.filtros::-webkit-scrollbar{display:none}
+.filtros .chip{background:transparent;border-color:var(--latte)}
+.filtros .chip.on{background:var(--mocha);color:#fff;border-color:var(--mocha)}
+
+/* Quadro de colunas */
+.quadro{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 16px;align-items:flex-start;-webkit-overflow-scrolling:touch}
+.coluna{flex:0 0 86vw;max-width:340px;scroll-snap-align:start;background:rgba(232,211,185,.45);border-radius:var(--raio);padding:10px;display:flex;flex-direction:column;max-height:calc(100vh - 150px);min-height:160px}
+@media(min-width:760px){.coluna{flex:0 0 300px}}
+@media(min-width:1280px){.quadro.ajusta .coluna{flex:1 1 0;max-width:none;min-width:260px}}
+.col-topo{display:flex;align-items:center;gap:8px;padding:2px 2px 10px}
+.col-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+.col-topo h3{margin:0;font-size:15px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col-topo .n{font-size:12px;color:var(--texto-2);font-weight:600;background:var(--espuma);border-radius:8px;padding:2px 7px}
+.col-topo .ib{width:32px;height:32px;border-radius:9px}
+.col-lista{overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px;min-height:60px;flex:1;border-radius:12px;transition:background .15s}
+.col-lista.alvo{background:rgba(198,139,89,.18)}
+.vazio{font-size:13px;color:var(--texto-2);text-align:center;padding:18px 10px;border:1.5px dashed var(--latte);border-radius:12px}
+.marcador{height:3px;border-radius:3px;background:var(--caramelo);margin:-2px 4px}
+
+/* Cartões */
+.cartao{background:var(--espuma);border-radius:12px;box-shadow:var(--sombra);padding:10px 12px;cursor:pointer;position:relative;border:1px solid transparent;transition:border-color .12s,transform .12s}
+.cartao:hover{border-color:var(--latte)}
+.cartao.arrastado{opacity:.4}
+.cartao .tit{font-weight:600;font-size:14.5px;word-break:break-word}
+.cartao .txt{font-size:14px;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+.cartao .nota{font-size:13px;color:var(--texto-2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.cartao .thumb{margin:-10px -12px 8px;border-radius:12px 12px 0 0;overflow:hidden;background:var(--latte);aspect-ratio:16/10;display:grid;place-items:center}
+.cartao .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cartao .thumb:has(+ .rodape-c:empty){margin-bottom:-10px;border-radius:12px}
+.linha-link{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:700;color:#fff;flex:none;text-transform:uppercase;font-size:14px}
+.linha-link .meio{min-width:0;flex:1}
+.linha-link .host{font-size:12px;color:var(--texto-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.linha-link .tit{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.abrir{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--mocha);flex:none}
+.abrir:hover{background:var(--latte)}
+.arquivo-ext{width:34px;height:34px;border-radius:9px;background:var(--latte);display:grid;place-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--espresso);flex:none}
+.rodape-c{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rodape-c:empty{display:none}
+.tag{font-size:11.5px;background:var(--latte);color:var(--espresso);border-radius:6px;padding:1px 7px;font-weight:500}
+.fixo{position:absolute;top:8px;right:8px;color:var(--caramelo)}
+.cartao.tem-fixo .tit,.cartao.tem-fixo .txt{padding-right:18px}
+
+/* Janela (painel que sobe no celular / janela no computador) */
+.janela-fundo{position:fixed;inset:0;background:rgba(59,36,22,.4);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.janela{background:var(--espuma);width:100%;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:16px 16px 20px;animation:sobe .2s ease}
+@media(min-width:700px){.janela-fundo{align-items:center}.janela{max-width:560px;border-radius:20px}}
+@keyframes sobe{from{transform:translateY(30px)}to{transform:none}}
+.janela-topo{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.janela-topo h3{margin:0;font-size:17px;flex:1}
+.campo{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.campo label{font-size:12.5px;font-weight:600;color:var(--texto-2)}
+.campo input,.campo textarea,.campo select{background:#fff;border:1px solid var(--borda);border-radius:var(--raio-p);padding:10px 12px;outline:none;width:100%}
+.campo input:focus,.campo textarea:focus,.campo select:focus{border-color:var(--caramelo)}
+.campo textarea{resize:vertical;min-height:80px}
+.campo small{font-size:12px;color:var(--texto-2)}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview{border-radius:12px;overflow:hidden;background:var(--latte);margin-bottom:12px}
+.preview img{width:100%;display:block;max-height:60vh;object-fit:contain;background:#efe2d1}
+.caixa-arq{display:flex;align-items:center;gap:10px;background:var(--creme);border-radius:12px;padding:10px;margin-bottom:12px}
+.caixa-arq .meio{flex:1;min-width:0}
+.caixa-arq .meio div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.caixa-arq .meio small{color:var(--texto-2)}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.acoes .esp{flex:1}
+.troca{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;font-weight:500}
+.troca input{width:18px;height:18px;accent-color:var(--espresso)}
+
+/* Listas de página (arquivados, colunas) */
+.lista-p{display:flex;flex-direction:column;gap:8px}
+.linha-p{display:flex;align-items:center;gap:10px;background:var(--espuma);border-radius:12px;padding:10px 12px;box-shadow:var(--sombra)}
+.linha-p .meio{flex:1;min-width:0}
+.linha-p .meio .tit{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.linha-p .meio small{color:var(--texto-2)}
+.cartao-cfg{background:var(--espuma);border-radius:var(--raio);padding:14px;box-shadow:var(--sombra);margin-bottom:12px}
+.cartao-cfg h4{margin:0 0 6px;font-size:15px}
+.cartao-cfg p{margin:0 0 10px;color:var(--texto-2);font-size:14px}
+.grade-ico{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.grade-ico button{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;background:var(--creme)}
+.grade-ico button.on{background:var(--espresso);color:#fff}
+.grade-cor{display:flex;gap:8px;flex-wrap:wrap}
+.grade-cor button{width:30px;height:30px;border-radius:50%;border:3px solid transparent}
+.grade-cor button.on{border-color:var(--espresso)}
+
+/* Avisos */
+.toasts{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;width:max-content;max-width:92vw}
+.toast{background:var(--espresso);color:var(--espuma);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.toast button{color:var(--caramelo);font-weight:700}
+.carregando{display:grid;place-items:center;min-height:60vh;color:var(--texto-2);text-align:center;gap:10px}
+.login{max-width:360px;margin:12vh auto;background:var(--espuma);border-radius:20px;padding:22px;box-shadow:var(--sombra)}
+.login h2{margin:0 0 4px}
+.erro{color:var(--terracota);font-size:13px;min-height:18px}
+</style>
+</head>
+<body>
+<!-- =====================================================================
+     2. ESTRUTURA
+     ===================================================================== -->
+<div class="veu" id="veu"></div>
+<nav class="menu" id="menu" aria-label="Menu">
+  <div class="marca"><span class="col-ico" style="background:var(--espresso)" data-ico="box"></span>Caixa Pessoal</div>
+  <a href="#caixa" data-rota="caixa"><span data-ico="layout"></span>Caixa</a>
+  <a href="#arquivados" data-rota="arquivados"><span data-ico="archive"></span>Arquivados</a>
+  <a href="#colunas" data-rota="colunas"><span data-ico="columns"></span>Colunas</a>
+  <a href="#ajustes" data-rota="ajustes"><span data-ico="adjust"></span>Configurações</a>
+  <div class="rodape" id="modo-txt"></div>
+</nav>
+
+<header class="topo" id="topo">
+  <button class="ib" id="bt-menu" aria-label="Abrir menu" data-ico="menu"></button>
+  <h1 id="titulo">Caixa</h1>
+  <div class="busca hidden" id="busca"><span data-ico="search" data-sm></span><input id="busca-in" placeholder="Buscar em tudo…" autocomplete="off"><button class="ib" style="width:28px;height:28px" id="busca-x" aria-label="Fechar busca" data-ico="x"></button></div>
+  <button class="ib" id="bt-busca" aria-label="Buscar" data-ico="search"></button>
+</header>
+
+<main id="main"><div class="carregando"><div>Abrindo sua caixa…</div></div></main>
+<div class="toasts" id="toasts"></div>
+<input type="file" id="arq-in" multiple class="hidden">
+
+<script>
+/* =====================================================================
+   3. CONFIGURAÇÃO
+   Preencha só quando for publicar no GitHub Pages com Supabase.
+   Dentro do Claude o app usa o armazenamento da sua conta do Claude;
+   aberto como arquivo solto, sem Supabase, guarda só neste navegador.
+   ===================================================================== */
+const CONFIG = {
+  supabaseUrl: "",        // ex.: https://xxxx.supabase.co
+  supabaseKey: "",        // publishable (anon) key — nunca a secret key
+  bucket: "caixa"         // bucket do Supabase Storage para arquivos e prints
+};
+
+/* =====================================================================
+   4. ARMAZENAMENTO — a única parte que conversa com onde os dados ficam.
+   Todos os adaptadores têm a mesma interface:
+     init() → bool · carregar() → [docs] · gravar(doc) · apagar(id)
+     enviar(file) → ref · url(ref) → Promise<url> · apagarArq(ref)
+   Um "doc" é {id, tipo:'coluna'|'item', ...campos}.
+   ===================================================================== */
+const Adaptadores = {};
+
+/* 4.1 Conta do Claude (db + assets) */
+Adaptadores.claude = {
+  nome: "Salvo na sua conta do Claude",
+  fila: {},
+  async init(){
+    if(!(window.claude && window.claude.use)) return false;
+    const db = await window.claude.use("db");
+    if(!db) return false;
+    const user = await window.claude.use("user");
+    const uid = user ? await user.id() : null;
+    if(!uid) return false;
+    this.col = db.collection("data/users/" + uid);
+    try{ this.assets = await window.claude.use("assets"); }catch(e){ this.assets = null; }
+    try{ this.downloads = await window.claude.use("downloads"); }catch(e){ this.downloads = null; }
+    return true;
+  },
+  async carregar(){
+    const snap = await this.col.get();
+    return snap.docs.map(d => ({...d.data(), id: d.id}));
+  },
+  _enfileirar(id, fn){
+    const ant = this.fila[id] || Promise.resolve();
+    const prox = ant.catch(()=>{}).then(fn);
+    this.fila[id] = prox;
+    return prox;
+  },
+  gravar(doc){ const c = JSON.parse(JSON.stringify(doc)); return this._enfileirar(doc.id, () => this.col.doc(doc.id).set(c)); },
+  apagar(id){ return this._enfileirar(id, () => this.col.doc(id).delete()); },
+  async enviar(file){
+    if(!this.assets) throw new Error("Envio de arquivos indisponível nesta visualização.");
+    const r = await this.assets.upload(file);
+    return r.id;
+  },
+  async url(ref){ return "/_blob/" + ref; },
+  async apagarArq(ref){ try{ if(this.assets) await this.assets.delete(ref); }catch(e){} }
+};
+
+/* 4.2 Supabase (para o GitHub Pages) */
+Adaptadores.supabase = {
+  nome: "Salvo no Supabase",
+  urls: {},
+  async init(){
+    if(!CONFIG.supabaseUrl || !CONFIG.supabaseKey) return false;
+    await carregarScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js");
+    this.sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+    const { data } = await this.sb.auth.getSession();
+    if(!data.session){ await telaLogin(this.sb); }
+    const s = await this.sb.auth.getSession();
+    this.uid = s.data.session.user.id;
+    return true;
+  },
+  async carregar(){
+    const out = [];
+    for(const t of ["caixa_colunas","caixa_itens"]){
+      const { data, error } = await this.sb.from(t).select("id,dados");
+      if(error) throw error;
+      data.forEach(r => out.push({...r.dados, id: r.id}));
+    }
+    return out;
+  },
+  tabela(doc){ return doc.tipo === "coluna" ? "caixa_colunas" : "caixa_itens"; },
+  async gravar(doc){
+    const { error } = await this.sb.from(this.tabela(doc)).upsert({ id: doc.id, dados: doc });
+    if(error) throw error;
+  },
+  async apagar(id){
+    const t = id.startsWith("c_") ? "caixa_colunas" : "caixa_itens";
+    const { error } = await this.sb.from(t).delete().eq("id", id);
+    if(error) throw error;
+  },
+  async enviar(file){
+    const caminho = this.uid + "/" + novoId("f") + "-" + file.name.replace(/[^\w.\-]+/g, "_");
+    const { error } = await this.sb.storage.from(CONFIG.bucket).upload(caminho, file, { contentType: file.type });
+    if(error) throw error;
+    return caminho;
+  },
+  async url(ref){
+    const c = this.urls[ref];
+    if(c && c.ate > Date.now()) return c.url;
+    const { data } = await this.sb.storage.from(CONFIG.bucket).createSignedUrl(ref, 3600);
+    this.urls[ref] = { url: data.signedUrl, ate: Date.now() + 3300e3 };
+    return data.signedUrl;
+  },
+  async apagarArq(ref){ await this.sb.storage.from(CONFIG.bucket).remove([ref]); }
+};
+
+/* 4.3 Só neste navegador (IndexedDB) */
+Adaptadores.local = {
+  nome: "Salvo só neste navegador",
+  urls: {},
+  async init(){
+    if(!window.indexedDB) return false;
+    this.db = await new Promise((ok, ruim) => {
+      const r = indexedDB.open("caixa-pessoal", 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore("docs", { keyPath: "id" }); r.result.createObjectStore("arquivos", { keyPath: "id" }); };
+      r.onsuccess = () => ok(r.result); r.onerror = () => ruim(r.error);
+    });
+    return true;
+  },
+  _tx(loja, modo, fn){
+    return new Promise((ok, ruim) => {
+      const tx = this.db.transaction(loja, modo); const st = tx.objectStore(loja);
+      const r = fn(st); tx.oncomplete = () => ok(r && r.result); tx.onerror = () => ruim(tx.error);
+    });
+  },
+  carregar(){ return this._tx("docs", "readonly", st => st.getAll()); },
+  gravar(doc){ const c = JSON.parse(JSON.stringify(doc)); return this._tx("docs", "readwrite", st => st.put(c)); },
+  apagar(id){ return this._tx("docs", "readwrite", st => st.delete(id)); },
+  async enviar(file){ const id = novoId("f"); await this._tx("arquivos", "readwrite", st => st.put({ id, blob: file })); return id; },
+  async url(ref){
+    if(this.urls[ref]) return this.urls[ref];
+    const r = await this._tx("arquivos", "readonly", st => st.get(ref));
+    if(!r) return "";
+    return (this.urls[ref] = URL.createObjectURL(r.blob));
+  },
+  apagarArq(ref){ return this._tx("arquivos", "readwrite", st => st.delete(ref)); }
+};
+
+/* Memória pura, caso nada mais funcione (nada fica salvo) */
+Adaptadores.memoria = {
+  nome: "Sem armazenamento: nada fica salvo", docs: {}, arqs: {},
+  async init(){ return true; }, async carregar(){ return Object.values(this.docs); },
+  async gravar(d){ this.docs[d.id] = JSON.parse(JSON.stringify(d)); }, async apagar(id){ delete this.docs[id]; },
+  async enviar(f){ const id = novoId("f"); this.arqs[id] = URL.createObjectURL(f); return id; },
+  async url(ref){ return this.arqs[ref] || ""; }, async apagarArq(ref){ delete this.arqs[ref]; }
+};
+
+let Store = null;
+async function iniciarArmazenamento(){
+  const ordem = (CONFIG.supabaseUrl && !(window.claude && window.claude.use)) ? ["supabase","local","memoria"] : ["claude","supabase","local","memoria"];
+  for(const nome of ordem){
+    try{ if(await Adaptadores[nome].init()){ Store = Adaptadores[nome]; Store.id = nome; return; } }
+    catch(e){ console.warn("Armazenamento", nome, "falhou:", e); }
+  }
+}
+
+function carregarScript(src){
+  return new Promise((ok, ruim) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = ruim; document.head.appendChild(s); });
+}
+
+function telaLogin(sb){
+  return new Promise(ok => {
+    document.getElementById("topo").classList.add("hidden");
+    main.innerHTML = `<form class="login" id="f-login"><h2>Caixa Pessoal</h2><p class="sub" style="color:var(--texto-2);margin:0 0 16px">Entre com sua conta</p>
+      <div class="campo"><label>E-mail</label><input type="email" id="lg-email" required autocomplete="email"></div>
+      <div class="campo"><label>Senha</label><input type="password" id="lg-senha" required autocomplete="current-password"></div>
+      <div class="erro" id="lg-erro"></div><button class="bt pri" style="width:100%">Entrar</button></form>`;
+    document.getElementById("f-login").onsubmit = async ev => {
+      ev.preventDefault();
+      const { error } = await sb.auth.signInWithPassword({ email: $("#lg-email").value, password: $("#lg-senha").value });
+      if(error){ $("#lg-erro").textContent = "E-mail ou senha incorretos."; return; }
+      document.getElementById("topo").classList.remove("hidden");
+      ok();
+    };
+  });
+}
+
+/* =====================================================================
+   5. MODELO E REGRAS
+   Coluna: {id:'c_…', tipo:'coluna', nome, icone, cor, destino, ordem, oculta}
+     destino = que conteúdo cai nela automaticamente: link | arquivo | imagem | texto | nenhum
+   Item:   {id:'i_…', tipo:'item', colId, titulo, texto, url,
+            arquivo:{ref,nome,mime,tamanho}|null, tags:[], fixado,
+            arquivado, ordem, criadoEm, atualizadoEm}
+   ===================================================================== */
+const ICONES = {
+  menu:"M4 6h16M4 12h16M4 18h16", search:"M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0M21 21l-6-6",
+  plus:"M12 5v14M5 12h14", x:"M18 6L6 18M6 6l12 12", check:"M5 12l5 5L20 7",
+  link:"M9 15l6-6M11 6l.463-.536a5 5 0 0 1 7.071 7.072L18 13M13 18l-.397.534a5.068 5.068 0 0 1-7.127 0a4.972 4.972 0 0 1 0-7.071L6 11",
+  file:"M14 3v4a1 1 0 0 0 1 1h4M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zM9 13h6M9 17h4",
+  bulb:"M3 12h1m8-9v1m8 8h1M5.6 5.6l.7.7m12.1-.7l-.7.7M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0-1 3a2 2 0 0 1-4 0a3.5 3.5 0 0 0-1-3M9.7 17h4.6",
+  photo:"M15 8h.01M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6zM3 16l5-5c.928-.893 2.072-.893 3 0l5 5M14 14l1-1c.928-.893 2.072-.893 3 0l3 3",
+  note:"M13 20l7-7M13 20v-6a1 1 0 0 1 1-1h6V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7",
+  pin:"M15 4.5l-4 4L7 10l-1.5 1.5l7 7L14 17l1.5-4l4-4M9 15l-4.5 4.5M14.5 4L20 9.5",
+  bell:"M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6M9 17v1a3 3 0 0 0 6 0v-1",
+  archive:"M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4",
+  trash:"M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3",
+  dots:"M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
+  external:"M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6M11 13l9-9M15 4h5v5",
+  copy:"M8 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2zM16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2",
+  download:"M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5l5-5M12 4v12",
+  upload:"M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5M12 4v12",
+  clip:"M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3L18 10a3 3 0 0 0-6-6l-6.5 6.5a4.5 4.5 0 0 0 9 9L21 13",
+  left:"M15 6l-6 6l6 6", right:"M9 6l6 6l-6 6", up:"M6 15l6-6l6 6", down:"M6 9l6 6l6-6",
+  adjust:"M4 6h8M16 6h4M4 12h2M10 12h10M4 18h11M19 18h1M14 4v4M8 10v4M17 16v4",
+  columns:"M4 4h6M14 4h6M4 10a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM14 10a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z",
+  layout:"M4 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM14 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z",
+  box:"M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5",
+  tag:"M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592-5.592a2.41 2.41 0 0 0 0-3.408l-7.71-7.71A2 2 0 0 0 11.172 3H6a3 3 0 0 0-3 3",
+  edit:"M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16v4M13.5 6.5l4 4",
+  eye:"M10 12a2 2 0 1 0 4 0a2 2 0 0 0-4 0M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6",
+  eyeoff:"M10.585 10.587a2 2 0 0 0 2.829 2.828M16.681 16.673A8.717 8.717 0 0 1 12 18c-3.6 0-6.6-2-9-6c1.272-2.12 2.712-3.678 4.32-4.674m2.86-1.146A9.055 9.055 0 0 1 12 6c3.6 0 6.6 2 9 6c-.666 1.11-1.379 2.067-2.138 2.87M3 3l18 18",
+  clock:"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M12 7v5l3 3",
+  star:"M12 17.75l-6.172 3.245l1.179-6.873l-5-4.867l6.9-1l3.086-6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z",
+  heart:"M19.5 12.572l-7.5 7.428l-7.5-7.428a5 5 0 1 1 7.5-6.566a5 5 0 1 1 7.5 6.572",
+  book:"M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13M12 6v13M21 6v13",
+  briefcase:"M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M12 12v.01M3 13a20 20 0 0 0 18 0",
+  video:"M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14v-4zM3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+  cart:"M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M17 17H6V3H4M6 5l14 1l-1 7H6",
+  key:"M16.555 3.843l3.602 3.602a2.877 2.877 0 0 1 0 4.069l-2.643 2.643a2.877 2.877 0 0 1-4.069 0l-.301-.301l-6.558 6.558a2 2 0 0 1-1.239.578L5.172 21H4a1 1 0 0 1-.993-.883L3 20v-1.172a2 2 0 0 1 .467-1.284l.119-.13L4 17h2v-2h2v-2l2.144-2.144l-.301-.301a2.877 2.877 0 0 1 0-4.069l2.643-2.643a2.877 2.877 0 0 1 4.069 0zM15 9h.01",
+  car:"M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9m-6-6h15m-6 0V6",
+  school:"M22 9L12 5L2 9l10 4l10-4v6M6 10.6V16a6 3 0 0 0 12 0v-5.4"
+};
+const ICONES_COLUNA = ["link","file","bulb","photo","note","box","star","heart","book","briefcase","video","cart","key","car","school","tag"];
+const CORES = ["#6F4E37","#C68B59","#5B7A3A","#A0522D","#8B6F47","#7A8B6F","#B5651D","#9C6B4E","#4F6D7A","#8E5A6B","#B5543A","#3B2416"];
+const DESTINOS = { link:"Links", arquivo:"Documentos e arquivos", imagem:"Imagens e prints", texto:"Textos e ideias", nenhum:"Nada (só manual)" };
+
+function ico(n, sm){ return `<svg class="i${sm?" sm":""}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES[n]||ICONES.box}"/></svg>`; }
+const $ = s => document.querySelector(s);
+const main = document.getElementById("main");
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function novoId(p){ return p + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function agora(){ return new Date().toISOString(); }
+
+const E = { colunas: [], itens: [], busca: "", tag: null, rota: "caixa" };
+
+const COLUNAS_PADRAO = [
+  { nome:"Links", icone:"link", cor:"#6F4E37", destino:"link" },
+  { nome:"Documentos", icone:"file", cor:"#4F6D7A", destino:"arquivo" },
+  { nome:"Ideias", icone:"bulb", cor:"#C68B59", destino:"texto" },
+  { nome:"Prints importantes", icone:"photo", cor:"#5B7A3A", destino:"imagem" }
+];
+
+const colunasVisiveis = () => E.colunas.filter(c => !c.oculta).sort((a,b) => a.ordem - b.ordem);
+const colunaPor = id => E.colunas.find(c => c.id === id);
+const itemPor = id => E.itens.find(i => i.id === id);
+function colunaDestino(tipo){
+  const vis = colunasVisiveis();
+  return vis.find(c => c.destino === tipo) || vis.find(c => c.destino === "texto") || vis[0];
+}
+function itensDa(colId){
+  return E.itens.filter(i => i.colId === colId && !i.arquivado && passaFiltro(i))
+    .sort((a,b) => (b.fixado?1:0) - (a.fixado?1:0) || a.ordem - b.ordem);
+}
+function passaFiltro(i){
+  if(E.tag && !(i.tags||[]).includes(E.tag)) return false;
+  if(!E.busca) return true;
+  const q = normal(E.busca);
+  return normal([i.titulo, i.texto, i.url, i.arquivo && i.arquivo.nome, (i.tags||[]).join(" ")].join(" ")).includes(q);
+}
+function normal(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+function tipoConteudo(i){
+  if(i.arquivo && /^image\//.test(i.arquivo.mime||"")) return "imagem";
+  if(i.arquivo) return "arquivo";
+  if(i.url) return "link";
+  return "texto";
+}
+function extrairUrl(t){ const m = String(t).match(/(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+)/i); return m ? m[0].replace(/[).,;]+$/, "") : null; }
+function normalizarUrl(u){ return /^https?:\/\//i.test(u) ? u : "https://" + u; }
+function hostDe(u){ try{ return new URL(normalizarUrl(u)).hostname.replace(/^www\./, ""); }catch(e){ return u; } }
+function tituloDeUrl(u){
+  try{
+    const x = new URL(normalizarUrl(u)); const h = x.hostname.replace(/^www\./, "");
+    const seg = decodeURIComponent(x.pathname).split("/").filter(Boolean).pop();
+    if(!seg) return h;
+    const limpo = seg.replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[-_+]+/g, " ").trim();
+    return limpo.length > 2 && !/^[\w]{16,}$/.test(limpo) ? limpo.charAt(0).toUpperCase() + limpo.slice(1) : h;
+  }catch(e){ return u; }
+}
+function extrairTags(t){
+  const tags = []; const resto = String(t).replace(/(^|\s)#([\p{L}\p{N}_-]{2,30})/gu, (m, a, tg) => { tags.push(tg.toLowerCase()); return a; });
+  return { tags: [...new Set(tags)], resto: resto.replace(/[ \t]+\n/g, "\n").trim() };
+}
+function corDe(s){ let h = 0; for(const c of String(s)) h = (h*31 + c.charCodeAt(0)) >>> 0; return CORES[h % CORES.length]; }
+function tamanho(b){ if(!b) return ""; if(b < 1024) return b + " B"; if(b < 1048576) return (b/1024).toFixed(0) + " KB"; return (b/1048576).toFixed(1).replace(".", ",") + " MB"; }
+function extDe(nome){ const m = String(nome).match(/\.([a-z0-9]{1,5})$/i); return m ? m[1] : "arq"; }
+function dataBR(iso, comHora){
+  if(!iso) return ""; const d = new Date(iso);
+  const s = d.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric" });
+  return comHora ? s + " " + d.toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" }) : s;
+}
+function todasTags(){ const m = {}; E.itens.filter(i => !i.arquivado).forEach(i => (i.tags||[]).forEach(t => m[t] = (m[t]||0) + 1)); return Object.entries(m).sort((a,b) => b[1]-a[1]).map(x => x[0]); }
+
+/* Gravações: atualizam o estado na hora e salvam em segundo plano */
+async function salvar(doc){
+  try{ await Store.gravar(doc); }
+  catch(e){ console.error(e); aviso("Não consegui salvar. Confira sua conexão."); }
+}
+function salvarItem(it){ it.atualizadoEm = agora(); if(!E.itens.includes(it)) E.itens.push(it); salvar(it); }
+function salvarColuna(c){ if(!E.colunas.includes(c)) E.colunas.push(c); salvar(c); }
+async function excluirItem(it){
+  E.itens = E.itens.filter(x => x !== it);
+  try{ await Store.apagar(it.id); if(it.arquivo) await Store.apagarArq(it.arquivo.ref); }catch(e){ aviso("Não consegui excluir."); }
+}
+function proximaOrdem(colId, noTopo){
+  const ords = E.itens.filter(i => i.colId === colId).map(i => i.ordem);
+  if(!ords.length) return 1000;
+  return noTopo ? Math.min(...ords) - 1000 : Math.max(...ords) + 1000;
+}
+
+/* =====================================================================
+   6. TELAS
+   ===================================================================== */
+function preencherIcones(raiz){ (raiz||document).querySelectorAll("[data-ico]").forEach(el => { if(!el.dataset.ok){ el.insertAdjacentHTML("afterbegin", ico(el.dataset.ico, el.hasAttribute("data-sm"))); el.dataset.ok = 1; } }); }
+
+/* 6.1 Navegação */
+const ROTAS = { caixa:"Caixa", arquivados:"Arquivados", colunas:"Colunas", ajustes:"Configurações" };
+function irPara(){
+  const r = location.hash.replace("#", "");
+  E.rota = ROTAS[r] ? r : "caixa";
+  document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("on", a.dataset.rota === E.rota));
+  $("#titulo").textContent = ROTAS[E.rota];
+  $("#bt-busca").classList.toggle("hidden", E.rota !== "caixa");
+  if(E.rota !== "caixa") fecharBusca(true);
+  fecharMenu(); desenhar(); window.scrollTo(0, 0);
+}
+function desenhar(){
+  ({ caixa: telaCaixa, arquivados: telaArquivados, colunas: telaColunas, ajustes: telaAjustes })[E.rota]();
+}
+function abrirMenu(){ $("#menu").classList.add("on"); $("#veu").classList.add("on"); }
+function fecharMenu(){ $("#menu").classList.remove("on"); $("#veu").classList.remove("on"); }
+$("#bt-menu").onclick = abrirMenu; $("#veu").onclick = fecharMenu;
+$("#bt-busca").onclick = () => { $("#busca").classList.remove("hidden"); $("#titulo").classList.add("hidden"); $("#bt-busca").classList.add("hidden"); $("#busca-in").focus(); };
+$("#busca-x").onclick = () => fecharBusca();
+$("#busca-in").oninput = e => { E.busca = e.target.value; desenharQuadro(); };
+function fecharBusca(silencioso){
+  $("#busca").classList.add("hidden"); $("#titulo").classList.remove("hidden");
+  if(E.rota === "caixa") $("#bt-busca").classList.remove("hidden");
+  if(E.busca){ E.busca = ""; $("#busca-in").value = ""; if(!silencioso) desenharQuadro(); }
+}
+
+/* 6.2 Caixa (página inicial): captura rápida + quadro de colunas */
+const Cap = { texto: "", arquivos: [], colId: null, manual: false };
+
+function telaCaixa(){
+  main.innerHTML = `
+  <section class="captura" id="cap">
+    <textarea id="cap-txt" rows="1" placeholder="Cole um link, anote uma ideia ou cole um print…"></textarea>
+    <div class="pendentes" id="cap-pend"></div>
+    <div class="barra">
+      <button class="ib" id="cap-anexo" aria-label="Anexar arquivo ou imagem" title="Anexar arquivo ou imagem" data-ico="clip"></button>
+      <div class="chips" id="cap-chips"></div>
+      <button class="bt pri" id="cap-ok" disabled>${ico("check", 1)}Guardar</button>
+    </div>
+  </section>
+  <div class="dica" id="dica">Enter guarda · Shift+Enter quebra linha · use #tag para etiquetar · arraste arquivos para cá</div>
+  <div class="filtros" id="filtros"></div>
+  <div class="quadro" id="quadro"></div>`;
+  preencherIcones(main);
+  if(matchMedia("(pointer:coarse)").matches) $("#dica").textContent = "Toque no clipe para anexar fotos e arquivos · use #tag para etiquetar";
+  const ta = $("#cap-txt");
+  ta.value = Cap.texto;
+  ta.oninput = () => { Cap.texto = ta.value; autoAltura(ta); atualizarCaptura(); };
+  ta.onfocus = () => $("#cap").classList.add("foco");
+  ta.onblur = () => $("#cap").classList.remove("foco");
+  ta.onkeydown = e => {
+    if(e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer:coarse)").matches){ e.preventDefault(); guardarCaptura(); }
+    if(e.key === "Escape"){ limparCaptura(); ta.blur(); }
+  };
+  $("#cap-anexo").onclick = () => $("#arq-in").click();
+  $("#cap-ok").onclick = guardarCaptura;
+  const cap = $("#cap");
+  ["dragenter","dragover"].forEach(t => cap.addEventListener(t, e => { if(temArquivos(e)){ e.preventDefault(); cap.classList.add("arrastando"); } }));
+  cap.addEventListener("dragleave", () => cap.classList.remove("arrastando"));
+  cap.addEventListener("drop", e => { if(temArquivos(e)){ e.preventDefault(); e.stopPropagation(); cap.classList.remove("arrastando"); adicionarArquivos(e.dataTransfer.files); } });
+  autoAltura(ta);
+  atualizarCaptura();
+  desenharQuadro();
+}
+function autoAltura(ta){ ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 200) + "px"; }
+const temArquivos = e => e.dataTransfer && [...e.dataTransfer.types].includes("Files");
+
+function adicionarArquivos(lista){
+  for(const f of lista){
+    const p = { file: f, url: /^image\//.test(f.type) ? URL.createObjectURL(f) : null };
+    Cap.arquivos.push(p);
+  }
+  if(E.rota !== "caixa") location.hash = "caixa"; else atualizarCaptura();
+  setTimeout(() => $("#cap-txt") && $("#cap-txt").focus(), 30);
+}
+$("#arq-in").onchange = e => { adicionarArquivos(e.target.files); e.target.value = ""; };
+
+function tipoDaCaptura(){
+  if(Cap.arquivos.length) return Cap.arquivos.every(p => /^image\//.test(p.file.type)) ? "imagem" : "arquivo";
+  const t = Cap.texto.trim();
+  if(!t) return null;
+  const u = extrairUrl(t);
+  return u ? "link" : "texto";
+}
+function atualizarCaptura(){
+  const pend = $("#cap-pend"); if(!pend) return;
+  pend.innerHTML = Cap.arquivos.map((p, k) => `<div class="pend">${p.url ? `<img src="${p.url}" alt="">` : `<div class="ext">${esc(extDe(p.file.name))}</div>`}<span>${esc(p.file.name || "imagem colada")}</span><button data-k="${k}" aria-label="Remover">${ico("x",1)}</button></div>`).join("");
+  pend.querySelectorAll("button").forEach(b => b.onclick = () => { Cap.arquivos.splice(+b.dataset.k, 1); atualizarCaptura(); });
+  const tipo = tipoDaCaptura();
+  if(!Cap.manual){ const c = tipo ? colunaDestino(tipo) : null; Cap.colId = c ? c.id : null; }
+  if(Cap.colId && !colunaPor(Cap.colId)) Cap.colId = null;
+  const chips = $("#cap-chips");
+  chips.innerHTML = `<span class="destino">${tipo || Cap.manual ? "Vai para" : "Colunas"}</span>` + colunasVisiveis().map(c => `<button class="chip${c.id === Cap.colId ? " on" : ""}" data-id="${c.id}"><span class="bola" style="background:${c.cor}"></span>${esc(c.nome)}</button>`).join("");
+  chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { Cap.colId = b.dataset.id; Cap.manual = true; atualizarCaptura(); $("#cap-txt").focus(); });
+  const on = chips.querySelector(".chip.on"); if(on) on.scrollIntoView({ block:"nearest", inline:"nearest" });
+  $("#cap-ok").disabled = !tipo;
+}
+function limparCaptura(){
+  Cap.arquivos.forEach(p => p.url && URL.revokeObjectURL(p.url));
+  Object.assign(Cap, { texto: "", arquivos: [], colId: null, manual: false });
+  const ta = $("#cap-txt"); if(ta){ ta.value = ""; autoAltura(ta); }
+  atualizarCaptura();
+}
+async function guardarCaptura(){
+  const tipo = tipoDaCaptura(); if(!tipo) return;
+  const destino = colunaPor(Cap.colId) || colunaDestino(tipo);
+  if(!destino){ aviso("Crie uma coluna primeiro."); return; }
+  const { tags, resto } = extrairTags(Cap.texto);
+  const base = () => ({ id: novoId("i"), tipo: "item", colId: destino.id, titulo: "", texto: "", url: "", arquivo: null, tags: [...tags], fixado: false, arquivado: false, criadoEm: agora() });
+  const novos = [];
+  if(Cap.arquivos.length){
+    const arqs = [...Cap.arquivos];
+    const msg = aviso(arqs.length > 1 ? `Enviando ${arqs.length} arquivos…` : "Enviando…", null, 0);
+    $("#cap-ok").disabled = true;
+    for(const p of arqs){
+      try{
+        const ref = await Store.enviar(p.file);
+        const it = base();
+        if(!Cap.manual && arqs.length > 1){ const d = colunaDestino(/^image\//.test(p.file.type) ? "imagem" : "arquivo"); if(d) it.colId = d.id; }
+        it.arquivo ={ ref, nome: p.file.name || "imagem.png", mime: p.file.type, tamanho: p.file.size };
+        if(arqs.length === 1){ it.titulo = resto.split("\n")[0].slice(0, 120); it.texto = resto.split("\n").slice(1).join("\n").trim(); }
+        else it.texto = resto;
+        if(!it.titulo && !/^image\//.test(p.file.type)) it.titulo = p.file.name.replace(/\.[^.]+$/, "");
+        const u = extrairUrl(resto); if(u && arqs.length === 1){ it.url = normalizarUrl(u); }
+        novos.push(it);
+      }catch(e){ console.error(e); aviso("Não consegui enviar " + (p.file.name || "a imagem") + "."); }
+    }
+    msg && msg.remove();
+  } else {
+    const it = base();
+    const u = extrairUrl(resto);
+    if(u){
+      it.url = normalizarUrl(u);
+      const sobra = resto.replace(u, "").trim();
+      const linhas = sobra.split("\n").map(s => s.trim()).filter(Boolean);
+      if(linhas.length){ it.titulo = linhas[0].slice(0, 140); it.texto = linhas.slice(1).join("\n"); }
+      else it.titulo = tituloDeUrl(u);
+    } else {
+      it.texto = resto;
+    }
+    novos.push(it);
+  }
+  for(const it of novos){ it.ordem = proximaOrdem(it.colId, true); salvarItem(it); }
+  limparCaptura();
+  desenharQuadro();
+  if(novos.length){
+    const c = colunaPor(novos[0].colId);
+    aviso(`Guardado em ${c ? c.nome : "sua caixa"}`, { txt: "Abrir", fn: () => abrirItem(novos[0]) });
+    destacarColuna(novos[0].colId);
+  }
+}
+function destacarColuna(id){
+  const el = document.querySelector(`.coluna[data-id="${id}"]`);
+  if(el) el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+}
+
+/* Colar print em qualquer lugar da caixa */
+document.addEventListener("paste", e => {
+  if(E.rota !== "caixa" || document.querySelector(".janela-fundo")) return;
+  const arqs = [...(e.clipboardData && e.clipboardData.files || [])];
+  if(arqs.length){
+    e.preventDefault();
+    adicionarArquivos(arqs.map((f, k) => f.name && f.name !== "image.png" ? f : new File([f], `print-${new Date().toISOString().slice(0,16).replace(/[:T]/g,"-")}${k ? "-" + k : ""}.${(f.type.split("/")[1] || "png").replace("jpeg","jpg")}`, { type: f.type })));
+    return;
+  }
+  const alvo = e.target;
+  if(alvo && /INPUT|TEXTAREA/.test(alvo.tagName)) return;
+  const t = e.clipboardData && e.clipboardData.getData("text");
+  if(t){ e.preventDefault(); Cap.texto = (Cap.texto ? Cap.texto + "\n" : "") + t; const ta = $("#cap-txt"); ta.value = Cap.texto; autoAltura(ta); ta.focus(); atualizarCaptura(); }
+});
+/* Soltar arquivo em qualquer lugar da caixa */
+document.addEventListener("dragover", e => { if(E.rota === "caixa" && temArquivos(e)) e.preventDefault(); });
+document.addEventListener("drop", e => { if(E.rota === "caixa" && temArquivos(e)){ e.preventDefault(); adicionarArquivos(e.dataTransfer.files); } });
+
+function desenharFiltros(){
+  const f = $("#filtros"); if(!f) return;
+  const tags = todasTags();
+  if(!tags.length){ f.innerHTML = ""; E.tag = null; return; }
+  if(E.tag && !tags.includes(E.tag)) E.tag = null;
+  f.innerHTML = `<button class="chip${!E.tag ? " on" : ""}" data-t="">Tudo</button>` + tags.map(t => `<button class="chip${E.tag === t ? " on" : ""}" data-t="${esc(t)}">#${esc(t)}</button>`).join("");
+  f.querySelectorAll(".chip").forEach(b => b.onclick = () => { E.tag = b.dataset.t || null; desenharQuadro(); });
+}
+
+function desenharQuadro(){
+  const q = $("#quadro"); if(!q) return;
+  desenharFiltros();
+  const cols = colunasVisiveis();
+  q.classList.toggle("ajusta", cols.length <= 4);
+  if(!cols.length){ q.innerHTML = `<div class="vazio" style="flex:1">Nenhuma coluna visível. <a href="#colunas">Criar ou mostrar colunas</a></div>`; return; }
+  q.innerHTML = cols.map(c => {
+    const its = itensDa(c.id);
+    return `<section class="coluna" data-id="${c.id}">
+      <div class="col-topo">
+        <span class="col-ico" style="background:${c.cor}">${ico(c.icone, 1)}</span>
+        <h3 title="${esc(c.nome)}">${esc(c.nome)}</h3><span class="n">${its.length}</span>
+        <button class="ib" data-acao="add" aria-label="Adicionar em ${esc(c.nome)}">${ico("plus", 1)}</button>
+        <button class="ib" data-acao="cfg" aria-label="Editar coluna">${ico("dots", 1)}</button>
+      </div>
+      <div class="col-lista" data-col="${c.id}">${its.length ? its.map(cartao).join("") : `<div class="vazio">${E.busca || E.tag ? "Nada encontrado aqui" : textoVazio(c)}</div>`}</div>
+    </section>`;
+  }).join("");
+  q.querySelectorAll(".coluna").forEach(el => {
+    const c = colunaPor(el.dataset.id);
+    el.querySelector('[data-acao="add"]').onclick = () => { Cap.colId = c.id; Cap.manual = true; atualizarCaptura(); const ta = $("#cap-txt"); ta.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+    el.querySelector('[data-acao="cfg"]').onclick = () => editarColuna(c);
+  });
+  q.querySelectorAll(".cartao").forEach(el => {
+    const it = itemPor(el.dataset.id);
+    el.onclick = e => { if(e.target.closest("a")) return; abrirItem(it); };
+    el.onkeydown = e => { if(e.key === "Enter") abrirItem(it); };
+  });
+  ligarArrastar(q);
+  carregarImagens(q);
+}
+function textoVazio(c){
+  return { link: "Cole um link na caixa acima", arquivo: "Solte PDFs e documentos aqui em cima", imagem: "Cole um print (Ctrl+V) ou anexe uma foto", texto: "Escreva uma ideia lá em cima", nenhum: "Use o + para guardar algo aqui" }[c.destino] || "Vazio";
+}
+function cartao(i){
+  const t = tipoConteudo(i);
+  let corpo = "";
+  if(t === "imagem"){
+    corpo = `<div class="thumb"><img data-ref="${esc(i.arquivo.ref)}" alt="${esc(i.titulo || i.arquivo.nome)}" loading="lazy"></div>` +
+      (i.titulo ? `<div class="tit">${esc(i.titulo)}</div>` : "") + (i.texto ? `<div class="nota">${esc(i.texto)}</div>` : "");
+  } else if(t === "arquivo"){
+    corpo = `<div class="linha-link"><div class="arquivo-ext">${esc(extDe(i.arquivo.nome))}</div><div class="meio"><div class="tit">${esc(i.titulo || i.arquivo.nome)}</div><div class="host">${esc(i.arquivo.nome)} · ${tamanho(i.arquivo.tamanho)}</div></div></div>` + (i.texto ? `<div class="nota">${esc(i.texto)}</div>` : "");
+  } else if(t === "link"){
+    const h = hostDe(i.url);
+    corpo = `<div class="linha-link"><div class="avatar" style="background:${corDe(h)}">${esc(h.charAt(0))}</div><div class="meio"><div class="tit">${esc(i.titulo || h)}</div><div class="host">${esc(h)}</div></div><a class="abrir" href="${esc(i.url)}" target="_blank" rel="noopener" aria-label="Abrir link" title="Abrir link">${ico("external", 1)}</a></div>` + (i.texto ? `<div class="nota">${esc(i.texto)}</div>` : "");
+  } else {
+    corpo = (i.titulo ? `<div class="tit">${esc(i.titulo)}</div>` : "") + `<div class="${i.titulo ? "nota" : "txt"}">${esc(i.texto)}</div>`;
+  }
+  const rod = (i.tags||[]).map(tg => `<span class="tag">#${esc(tg)}</span>`).join("");
+  return `<article class="cartao${i.fixado ? " tem-fixo" : ""}" data-id="${i.id}" draggable="true" tabindex="0">${i.fixado ? `<span class="fixo" title="Fixado">${ico("pin", 1)}</span>` : ""}${corpo}<div class="rodape-c">${rod}</div></article>`;
+}
+async function carregarImagens(raiz){
+  for(const img of raiz.querySelectorAll("img[data-ref]")){
+    try{ const u = await Store.url(img.dataset.ref); if(u) img.src = u; }catch(e){}
+  }
+}
+
+/* Arrastar cartões entre colunas (computador). No celular, use "Coluna" dentro do item. */
+let arrastando = null;
+function ligarArrastar(q){
+  q.querySelectorAll(".cartao").forEach(el => {
+    el.addEventListener("dragstart", e => { arrastando = el.dataset.id; el.classList.add("arrastado"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "caixa:" + arrastando); });
+    el.addEventListener("dragend", () => { arrastando = null; el.classList.remove("arrastado"); q.querySelectorAll(".marcador").forEach(m => m.remove()); q.querySelectorAll(".alvo").forEach(m => m.classList.remove("alvo")); });
+  });
+  q.querySelectorAll(".col-lista").forEach(lista => {
+    lista.addEventListener("dragover", e => {
+      if(!arrastando) return; e.preventDefault();
+      lista.classList.add("alvo");
+      q.querySelectorAll(".marcador").forEach(m => m.remove());
+      const depois = cartaoDepois(lista, e.clientY);
+      const m = document.createElement("div"); m.className = "marcador";
+      depois ? lista.insertBefore(m, depois) : lista.appendChild(m);
+    });
+    lista.addEventListener("dragleave", e => { if(!lista.contains(e.relatedTarget)) lista.classList.remove("alvo"); });
+    lista.addEventListener("drop", e => {
+      if(!arrastando) return; e.preventDefault(); e.stopPropagation();
+      const it = itemPor(arrastando); const depois = cartaoDepois(lista, e.clientY);
+      moverItem(it, lista.dataset.col, depois ? depois.dataset.id : null);
+    });
+  });
+}
+function cartaoDepois(lista, y){
+  const cs = [...lista.querySelectorAll(".cartao:not(.arrastado)")];
+  return cs.find(c => { const r = c.getBoundingClientRect(); return y < r.top + r.height / 2; }) || null;
+}
+function moverItem(it, colId, antesDeId){
+  const lista = E.itens.filter(i => i.colId === colId && !i.arquivado && i !== it).sort((a,b) => a.ordem - b.ordem);
+  const k = antesDeId ? lista.findIndex(i => i.id === antesDeId) : -1;
+  let ordem;
+  if(k === -1) ordem = lista.length ? lista[lista.length-1].ordem + 1000 : 1000;
+  else if(k === 0) ordem = lista[0].ordem - 1000;
+  else ordem = (lista[k-1].ordem + lista[k].ordem) / 2;
+  const mudouCol = it.colId !== colId;
+  it.colId = colId; it.ordem = ordem; salvarItem(it); desenharQuadro();
+  if(mudouCol) aviso("Movido para " + colunaPor(colId).nome);
+}
+
+/* 6.3 Janela do item: ver, editar, mover, arquivar, excluir */
+function janela(html, aoFechar){
+  const f = document.createElement("div"); f.className = "janela-fundo";
+  f.innerHTML = `<div class="janela" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(f);
+  const fechar = () => { f.remove(); document.removeEventListener("keydown", esc_); aoFechar && aoFechar(); };
+  const esc_ = e => { if(e.key === "Escape") fechar(); };
+  f.addEventListener("mousedown", e => { if(e.target === f) fechar(); });
+  document.addEventListener("keydown", esc_);
+  preencherIcones(f);
+  return { el: f.querySelector(".janela"), fechar };
+}
+async function abrirItem(it){
+  const t = tipoConteudo(it);
+  const cols = [...E.colunas].sort((a,b) => a.ordem - b.ordem);
+  let topo = "";
+  if(t === "imagem") topo = `<div class="preview"><img id="j-img" alt=""></div>`;
+  if(it.arquivo && t !== "imagem") topo = `<div class="caixa-arq"><div class="arquivo-ext">${esc(extDe(it.arquivo.nome))}</div><div class="meio"><div>${esc(it.arquivo.nome)}</div><small>${tamanho(it.arquivo.tamanho)}</small></div><a class="bt sec pq" id="j-arq" target="_blank" rel="noopener">${ico("external",1)}Abrir</a></div>`;
+  if(t === "imagem") topo += `<div class="acoes" style="margin:-4px 0 12px"><a class="bt sec pq" id="j-arq" target="_blank" rel="noopener">${ico("external",1)}Abrir em tamanho real</a></div>`;
+  const j = janela(`
+    <div class="janela-topo"><h3>${{ imagem:"Print", arquivo:"Documento", link:"Link", texto:"Ideia" }[t]}</h3>
+      <button class="ib" id="j-fixar" title="${it.fixado ? "Desafixar" : "Fixar no topo"}" style="${it.fixado ? "color:var(--caramelo)" : ""}">${ico("pin")}</button>
+      <button class="ib" id="j-x" aria-label="Fechar">${ico("x")}</button></div>
+    ${topo}
+    <div class="campo"><label for="j-tit">Título</label><input id="j-tit" value="${esc(it.titulo)}" placeholder="${t === "texto" ? "Opcional" : "Dê um nome"}"></div>
+    ${t === "texto" || it.url ? "" : ""}
+    <div class="campo"><label for="j-url">Link</label><div style="display:flex;gap:6px"><input id="j-url" value="${esc(it.url)}" placeholder="https://…" inputmode="url">${it.url ? `<a class="bt sec pq" style="height:auto" href="${esc(it.url)}" target="_blank" rel="noopener" title="Abrir">${ico("external",1)}</a><button class="bt sec pq" style="height:auto" id="j-copiar" title="Copiar link">${ico("copy",1)}</button>` : ""}</div></div>
+    <div class="campo"><label for="j-txt">${t === "texto" ? "Ideia" : "Anotação"}</label><textarea id="j-txt" rows="${t === "texto" ? 6 : 3}" placeholder="Escreva aqui…">${esc(it.texto)}</textarea></div>
+    <div class="duas">
+      <div class="campo"><label for="j-col">Coluna</label><select id="j-col">${cols.map(c => `<option value="${c.id}"${c.id === it.colId ? " selected" : ""}>${esc(c.nome)}${c.oculta ? " (oculta)" : ""}</option>`).join("")}</select></div>
+      <div class="campo"><label for="j-tags">Tags</label><input id="j-tags" value="${esc((it.tags||[]).join(", "))}" placeholder="trabalho, ideias" list="j-tags-l"><datalist id="j-tags-l">${todasTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></div>
+    </div>
+    <small style="color:var(--texto-2);display:block;margin:-4px 0 12px">Guardado em ${dataBR(it.criadoEm, true)}</small>
+    <div class="acoes">
+      <button class="bt perigo pq" id="j-del">${ico("trash",1)}Excluir</button>
+      <button class="bt leve pq" id="j-arc">${ico("archive",1)}${it.arquivado ? "Desarquivar" : "Arquivar"}</button>
+      ${t === "texto" ? `<button class="bt leve pq" id="j-cp-txt">${ico("copy",1)}Copiar</button>` : ""}
+      <span class="esp"></span>
+      <button class="bt pri" id="j-ok">Salvar</button>
+    </div>`);
+  const el = j.el;
+  if(it.arquivo){
+    Store.url(it.arquivo.ref).then(u => { if(!u) return; const im = el.querySelector("#j-img"); if(im) im.src = u; const a = el.querySelector("#j-arq"); if(a) a.href = u; }).catch(() => {});
+  }
+  let fixado = it.fixado;
+  el.querySelector("#j-x").onclick = j.fechar;
+  el.querySelector("#j-fixar").onclick = e => { fixado = !fixado; e.currentTarget.style.color = fixado ? "var(--caramelo)" : ""; };
+  const cp = el.querySelector("#j-copiar"); if(cp) cp.onclick = () => copiar(it.url, "Link copiado");
+  const ct = el.querySelector("#j-cp-txt"); if(ct) ct.onclick = () => copiar(el.querySelector("#j-txt").value, "Texto copiado");
+  el.querySelector("#j-ok").onclick = () => {
+    const col = el.querySelector("#j-col").value;
+    if(col !== it.colId){ it.colId = col; it.ordem = proximaOrdem(col, true); }
+    const u = el.querySelector("#j-url").value.trim();
+    Object.assign(it, {
+      titulo: el.querySelector("#j-tit").value.trim(), texto: el.querySelector("#j-txt").value,
+      url: u ? normalizarUrl(u) : "", fixado,
+      tags: [...new Set(el.querySelector("#j-tags").value.split(/[,\s]+/).map(s => s.replace(/^#/, "").trim().toLowerCase()).filter(Boolean))]
+    });
+    salvarItem(it); j.fechar(); desenhar();
+  };
+  el.querySelector("#j-arc").onclick = () => {
+    it.arquivado = !it.arquivado; salvarItem(it); j.fechar(); desenhar();
+    aviso(it.arquivado ? "Arquivado" : "De volta à caixa", { txt: "Desfazer", fn: () => { it.arquivado = !it.arquivado; salvarItem(it); desenhar(); } });
+  };
+  el.querySelector("#j-del").onclick = async () => {
+    if(await confirmar("Excluir este item?", it.arquivo ? "O arquivo também será apagado. Não dá para desfazer." : "Não dá para desfazer.", "Excluir")){
+      await excluirItem(it); j.fechar(); desenhar(); aviso("Excluído");
+    }
+  };
+}
+function confirmar(titulo, texto, botao){
+  return new Promise(ok => {
+    const j = janela(`<div class="janela-topo"><h3>${esc(titulo)}</h3></div><p style="margin:0 0 16px;color:var(--texto-2)">${esc(texto)}</p>
+      <div class="acoes"><span class="esp"></span><button class="bt leve" id="cf-n">Cancelar</button><button class="bt pri" id="cf-s" style="background:var(--terracota)">${esc(botao)}</button></div>`, () => ok(false));
+    j.el.querySelector("#cf-n").onclick = () => j.fechar();
+    j.el.querySelector("#cf-s").onclick = () => { ok(true); j.fechar(); };
+  });
+}
+async function copiar(txt, msg){
+  try{ await navigator.clipboard.writeText(txt); aviso(msg || "Copiado"); }
+  catch(e){ aviso("Não consegui copiar automaticamente."); }
+}
+
+/* 6.4 Editar coluna */
+function editarColuna(c){
+  const nova = !c;
+  c = c || { id: novoId("c"), tipo: "coluna", nome: "", icone: "box", cor: CORES[E.colunas.length % CORES.length], destino: "nenhum", ordem: (Math.max(0, ...E.colunas.map(x => x.ordem)) + 1), oculta: false };
+  let icone = c.icone, cor = c.cor;
+  const qtd = E.itens.filter(i => i.colId === c.id).length;
+  const j = janela(`
+    <div class="janela-topo"><h3>${nova ? "Nova coluna" : "Editar coluna"}</h3><button class="ib" id="k-x" aria-label="Fechar">${ico("x")}</button></div>
+    <div class="campo"><label for="k-nome">Nome</label><input id="k-nome" value="${esc(c.nome)}" placeholder="Ex.: Receitas, Senhas de Wi-Fi, Cursos" maxlength="40"></div>
+    <div class="campo"><label>Ícone</label><div class="grade-ico">${ICONES_COLUNA.map(n => `<button data-i="${n}" class="${n === icone ? "on" : ""}" aria-label="${n}">${ico(n, 1)}</button>`).join("")}</div></div>
+    <div class="campo"><label>Cor</label><div class="grade-cor">${CORES.map(x => `<button data-c="${x}" class="${x === cor ? "on" : ""}" style="background:${x}" aria-label="cor ${x}"></button>`).join("")}</div></div>
+    <div class="campo"><label for="k-dest">Recebe automaticamente</label><select id="k-dest">${Object.entries(DESTINOS).map(([k, v]) => `<option value="${k}"${k === c.destino ? " selected" : ""}>${v}</option>`).join("")}</select>
+      <small>Quando você cola algo desse tipo na caixa, ele já vem marcado para esta coluna. Se duas colunas recebem o mesmo tipo, vale a primeira.</small></div>
+    ${nova ? "" : `<label class="troca"><input type="checkbox" id="k-oc"${c.oculta ? " checked" : ""}>Ocultar da página inicial</label>`}
+    <div class="acoes">
+      ${nova ? "" : `<button class="bt perigo pq" id="k-del">${ico("trash",1)}Excluir</button>`}
+      ${nova ? "" : `<button class="bt leve pq" id="k-esq" title="Mover para a esquerda">${ico("left",1)}</button><button class="bt leve pq" id="k-dir" title="Mover para a direita">${ico("right",1)}</button>`}
+      <span class="esp"></span><button class="bt pri" id="k-ok">${nova ? "Criar" : "Salvar"}</button>
+    </div>`);
+  const el = j.el;
+  el.querySelector("#k-x").onclick = j.fechar;
+  el.querySelectorAll("[data-i]").forEach(b => b.onclick = () => { icone = b.dataset.i; el.querySelectorAll("[data-i]").forEach(x => x.classList.toggle("on", x === b)); });
+  el.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { cor = b.dataset.c; el.querySelectorAll("[data-c]").forEach(x => x.classList.toggle("on", x === b)); });
+  if(nova) setTimeout(() => el.querySelector("#k-nome").focus(), 50);
+  el.querySelector("#k-ok").onclick = () => {
+    const nome = el.querySelector("#k-nome").value.trim();
+    if(!nome){ el.querySelector("#k-nome").focus(); return; }
+    Object.assign(c, { nome, icone, cor, destino: el.querySelector("#k-dest").value, oculta: nova ? false : el.querySelector("#k-oc").checked });
+    salvarColuna(c); j.fechar(); desenhar();
+  };
+  if(!nova){
+    el.querySelector("#k-esq").onclick = () => { trocarOrdem(c, -1); desenhar(); };
+    el.querySelector("#k-dir").onclick = () => { trocarOrdem(c, 1); desenhar(); };
+    el.querySelector("#k-del").onclick = async () => {
+      j.fechar();
+      if(!qtd){ if(await confirmar(`Excluir "${c.nome}"?`, "A coluna está vazia.", "Excluir")) excluirColuna(c, null); return; }
+      excluirColunaComItens(c, qtd);
+    };
+  }
+}
+function excluirColunaComItens(c, qtd){
+  const outras = E.colunas.filter(x => x !== c).sort((a,b) => a.ordem - b.ordem);
+  const j = janela(`<div class="janela-topo"><h3>Excluir "${esc(c.nome)}"</h3></div>
+    <p style="margin:0 0 12px;color:var(--texto-2)">Ela tem ${qtd} ${qtd === 1 ? "item" : "itens"}. O que fazer com ${qtd === 1 ? "ele" : "eles"}?</p>
+    ${outras.length ? `<div class="campo"><label for="d-para">Mover para</label><select id="d-para">${outras.map(o => `<option value="${o.id}">${esc(o.nome)}</option>`).join("")}</select></div>` : ""}
+    <div class="acoes"><button class="bt perigo pq" id="d-tudo">Excluir tudo</button><span class="esp"></span><button class="bt leve" id="d-n">Cancelar</button>${outras.length ? `<button class="bt pri" id="d-mov">Mover e excluir</button>` : ""}</div>`);
+  j.el.querySelector("#d-n").onclick = j.fechar;
+  const mv = j.el.querySelector("#d-mov"); if(mv) mv.onclick = () => { excluirColuna(c, j.el.querySelector("#d-para").value); j.fechar(); };
+  j.el.querySelector("#d-tudo").onclick = async () => { j.fechar(); if(await confirmar("Excluir a coluna e todos os itens?", "Não dá para desfazer.", "Excluir tudo")) excluirColuna(c, null); };
+}
+async function excluirColuna(c, paraId){
+  const its = E.itens.filter(i => i.colId === c.id);
+  for(const it of its){
+    if(paraId){ it.colId = paraId; it.ordem = proximaOrdem(paraId); salvarItem(it); }
+    else await excluirItem(it);
+  }
+  E.colunas = E.colunas.filter(x => x !== c);
+  try{ await Store.apagar(c.id); }catch(e){}
+  desenhar(); aviso("Coluna excluída");
+}
+function trocarOrdem(c, dir){
+  const ord = [...E.colunas].sort((a,b) => a.ordem - b.ordem);
+  const k = ord.indexOf(c), o = ord[k + dir];
+  if(!o) return;
+  [c.ordem, o.ordem] = [o.ordem, c.ordem];
+  salvarColuna(c); salvarColuna(o);
+}
+
+/* 6.5 Página Colunas */
+function telaColunas(){
+  const ord = [...E.colunas].sort((a,b) => a.ordem - b.ordem);
+  main.innerHTML = `<div class="pagina"><h2>Colunas</h2><p class="sub">Crie, renomeie, mude a ordem ou esconda as colunas da sua caixa.</p>
+    <div class="lista-p">${ord.map((c, k) => `<div class="linha-p" data-id="${c.id}">
+      <span class="col-ico" style="background:${c.cor}">${ico(c.icone, 1)}</span>
+      <div class="meio"><div class="tit">${esc(c.nome)}${c.oculta ? ' <span class="tag">oculta</span>' : ""}</div><small>${(n => n + (n === 1 ? " item" : " itens"))(E.itens.filter(i => i.colId === c.id && !i.arquivado).length)} · recebe ${DESTINOS[c.destino].toLowerCase()}</small></div>
+      <button class="ib" data-a="up" ${k === 0 ? "disabled style='opacity:.3'" : ""} aria-label="Subir">${ico("up", 1)}</button>
+      <button class="ib" data-a="down" ${k === ord.length - 1 ? "disabled style='opacity:.3'" : ""} aria-label="Descer">${ico("down", 1)}</button>
+      <button class="ib" data-a="vis" aria-label="${c.oculta ? "Mostrar" : "Ocultar"}">${ico(c.oculta ? "eyeoff" : "eye", 1)}</button>
+      <button class="ib" data-a="edit" aria-label="Editar">${ico("edit", 1)}</button></div>`).join("")}</div>
+    <div style="margin-top:14px"><button class="bt pri" id="nova-col">${ico("plus", 1)}Nova coluna</button></div></div>`;
+  main.querySelectorAll(".linha-p").forEach(l => {
+    const c = colunaPor(l.dataset.id);
+    l.querySelector('[data-a="up"]').onclick = () => { trocarOrdem(c, -1); telaColunas(); };
+    l.querySelector('[data-a="down"]').onclick = () => { trocarOrdem(c, 1); telaColunas(); };
+    l.querySelector('[data-a="vis"]').onclick = () => { c.oculta = !c.oculta; salvarColuna(c); telaColunas(); };
+    l.querySelector('[data-a="edit"]').onclick = () => editarColuna(c);
+  });
+  $("#nova-col").onclick = () => editarColuna(null);
+}
+
+/* 6.6 Página Arquivados */
+function telaArquivados(){
+  const its = E.itens.filter(i => i.arquivado).sort((a,b) => (b.atualizadoEm||"").localeCompare(a.atualizadoEm||""));
+  main.innerHTML = `<div class="pagina"><h2>Arquivados</h2><p class="sub">Itens que saíram da caixa mas não foram apagados.</p>
+    <div class="lista-p">${its.length ? its.map(linhaItem).join("") : `<div class="vazio">Nada arquivado.</div>`}</div></div>`;
+  ligarLinhas();
+}
+function linhaItem(i, extra){
+  const c = colunaPor(i.colId); const t = tipoConteudo(i);
+  const nome = i.titulo || (i.texto ? i.texto.split("\n")[0] : "") || (i.arquivo && i.arquivo.nome) || hostDe(i.url) || "Sem título";
+  return `<div class="linha-p" data-id="${i.id}" style="cursor:pointer">
+    <span class="col-ico" style="background:${c ? c.cor : "#8B6F47"}">${ico({ imagem:"photo", arquivo:"file", link:"link", texto:"bulb" }[t], 1)}</span>
+    <div class="meio"><div class="tit">${esc(nome)}</div><small>${esc(c ? c.nome : "Sem coluna")}${extra ? " · " + extra : ""}</small></div>
+    ${ico("right", 1)}</div>`;
+}
+function ligarLinhas(){ main.querySelectorAll(".linha-p[data-id]").forEach(l => l.onclick = () => abrirItem(itemPor(l.dataset.id))); }
+
+/* 6.7 Configurações: armazenamento e backup */
+function telaAjustes(){
+  const n = E.itens.length, comArq = E.itens.filter(i => i.arquivo).length;
+  main.innerHTML = `<div class="pagina"><h2>Configurações</h2><p class="sub">${esc(Store.nome)}.</p>
+    <div class="cartao-cfg"><h4>Backup</h4><p>Exporte tudo em JSON para guardar ou levar para outro lugar. Você tem ${n} itens, ${comArq} com arquivo.</p>
+      <label class="troca"><input type="checkbox" id="bk-arq">Incluir arquivos e prints no backup (fica bem maior)</label>
+      <div class="acoes"><button class="bt pri pq" id="bk-exp">${ico("download", 1)}Exportar backup</button><button class="bt sec pq" id="bk-imp">${ico("upload", 1)}Importar backup</button></div>
+      <input type="file" id="bk-in" accept=".json,application/json" class="hidden"></div>
+    <div class="cartao-cfg"><h4>Onde seus dados ficam</h4><p>${Store.id === "claude" ? "Nesta versão dentro do Claude, tudo fica na sua conta do Claude, privado só para você, e aparece em qualquer aparelho em que você abrir este link." : Store.id === "supabase" ? "No seu projeto do Supabase, protegido por login. Os arquivos ficam no bucket “" + esc(CONFIG.bucket) + "”." : Store.id === "local" ? "Só neste navegador. Para usar em outros aparelhos, configure o Supabase na seção 3 do arquivo." : "Nada está sendo salvo. Recarregar a página apaga tudo."}</p></div>
+  </div>`;
+  $("#bk-exp").onclick = exportarBackup;
+  $("#bk-imp").onclick = () => $("#bk-in").click();
+  $("#bk-in").onchange = e => { const f = e.target.files[0]; if(f) importarBackup(f); e.target.value = ""; };
+}
+async function exportarBackup(){
+  const comArq = $("#bk-arq").checked;
+  const dados = { app: "caixa-pessoal", versao: 1, exportadoEm: agora(), colunas: E.colunas, itens: JSON.parse(JSON.stringify(E.itens)), arquivos: {} };
+  if(comArq){
+    const msg = aviso("Preparando arquivos…", null, 0);
+    for(const it of dados.itens.filter(i => i.arquivo)){
+      try{ const u = await Store.url(it.arquivo.ref); const b = await (await fetch(u)).blob(); dados.arquivos[it.arquivo.ref] = await paraDataUrl(b); }catch(e){ console.warn("sem arquivo", it.arquivo.nome); }
+    }
+    msg && msg.remove();
+  }
+  const texto = JSON.stringify(dados, null, 1);
+  const nome = `caixa-pessoal-${new Date().toISOString().slice(0,10)}.json`;
+  if(Store.id === "claude"){
+    if(Store.downloads){ try{ await Store.downloads.save({ filename: nome, data: texto }); return; }catch(e){ if(e && /declin|cancel|reject/i.test(e.code || e.message || "")) return; } }
+    copiar(texto, "Backup copiado. Cole num arquivo .json para guardar.");
+    return;
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([texto], { type: "application/json" })); a.download = nome; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function paraDataUrl(b){ return new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(b); }); }
+async function importarBackup(f){
+  let d; try{ d = JSON.parse(await f.text()); }catch(e){ aviso("Esse arquivo não é um backup válido."); return; }
+  if(d.app !== "caixa-pessoal"){ aviso("Esse arquivo não é um backup da Caixa Pessoal."); return; }
+  if(!await confirmar("Importar backup?", `${d.colunas.length} colunas e ${d.itens.length} itens. Itens com o mesmo código serão substituídos; o resto da caixa fica como está.`, "Importar")) return;
+  const msg = aviso("Importando…", null, 0);
+  for(const c of d.colunas){ const ex = colunaPor(c.id); if(ex) Object.assign(ex, c); else E.colunas.push(c); await Store.gravar(c); }
+  for(const it of d.itens){
+    if(it.arquivo && d.arquivos && d.arquivos[it.arquivo.ref]){
+      try{ const b = await (await fetch(d.arquivos[it.arquivo.ref])).blob(); it.arquivo.ref = await Store.enviar(new File([b], it.arquivo.nome, { type: it.arquivo.mime })); }catch(e){ console.warn(e); }
+    }
+    const ex = itemPor(it.id); if(ex) Object.assign(ex, it); else E.itens.push(it);
+    await Store.gravar(it);
+  }
+  msg && msg.remove(); aviso("Backup importado"); desenhar();
+}
+
+/* Avisos rápidos */
+function aviso(txt, acao, ms){
+  const t = document.createElement("div"); t.className = "toast";
+  t.innerHTML = `<span>${esc(txt)}</span>` + (acao ? `<button>${esc(acao.txt)}</button>` : "");
+  if(acao) t.querySelector("button").onclick = () => { t.remove(); acao.fn(); };
+  const caixa = $("#toasts"); caixa.appendChild(t);
+  [...caixa.children].slice(0, -2).forEach(x => x.remove());
+  if(ms !== 0) setTimeout(() => t.remove(), ms || 4500);
+  return t;
+}
+
+/* =====================================================================
+   7. INICIALIZAÇÃO
+   ===================================================================== */
+preencherIcones();
+window.addEventListener("hashchange", irPara);
+(async function iniciar(){
+  await iniciarArmazenamento();
+  $("#modo-txt").textContent = Store.nome;
+  let docs = [];
+  try{ docs = await Store.carregar(); }
+  catch(e){ console.error(e); main.innerHTML = `<div class="carregando"><div>Não consegui abrir sua caixa agora.<br><button class="bt sec" style="margin-top:12px" onclick="location.reload()">Tentar de novo</button></div></div>`; return; }
+  E.colunas = docs.filter(d => d.tipo === "coluna");
+  E.itens = docs.filter(d => d.tipo === "item");
+  if(!E.colunas.length && !E.itens.length){
+    COLUNAS_PADRAO.forEach((c, k) => salvarColuna({ id: novoId("c"), tipo: "coluna", ordem: k + 1, oculta: false, ...c }));
+  }
+  irPara();
+})();
+</script>
+</body>
+</html>
