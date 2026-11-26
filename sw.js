@@ -1,9 +1,10 @@
 /* Service worker da Caixa Pessoal
    - Arquivos do app: busca na rede primeiro (atualizações chegam na hora) e usa o cache se estiver offline.
-   - Bibliotecas e fontes (jsDelivr, Google Fonts): usa o cache e atualiza por trás.
+   - Bibliotecas e fontes (jsDelivr, cdnjs, Google Fonts): usa o cache e atualiza por trás.
    - Supabase (dados, login e arquivos) nunca passa pelo cache.
+   - Recebe os avisos de ideias paradas (push) e abre a página "Paradas" ao tocar.
    Ao mudar a lista abaixo, aumente a VERSAO. */
-const VERSAO = "caixa-v1";
+const VERSAO = "caixa-v2";
 const ARQUIVOS = [
   "./",
   "./index.html",
@@ -42,7 +43,7 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  if (/cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/.test(url.hostname)) {
+  if (/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com/.test(url.hostname)) {
     e.respondWith(
       caches.open(VERSAO).then(c => c.match(req).then(salvo => {
         const rede = fetch(req).then(r => { if (r.ok || r.type === "opaque") c.put(req, r.clone()); return r; }).catch(() => salvo);
@@ -50,4 +51,29 @@ self.addEventListener("fetch", e => {
       }))
     );
   }
+});
+
+/* Aviso de ideias paradas */
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { corpo: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.titulo || "Caixa Pessoal", {
+    body: d.corpo || "Você tem ideias paradas na Caixa.",
+    icon: "icones/icone-192.png",
+    badge: "icones/favicon-32.png",
+    tag: d.tag || "caixa-paradas",
+    renotify: true,
+    data: { url: d.url || "./#paradas" }
+  }));
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const alvo = new URL((e.notification.data && e.notification.data.url) || "./#paradas", self.registration.scope).href;
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(janelas => {
+    for (const w of janelas) {
+      if (w.url.startsWith(self.registration.scope)) return w.navigate(alvo).then(x => (x || w).focus()).catch(() => w.focus());
+    }
+    return clients.openWindow(alvo);
+  }));
 });
